@@ -1,7 +1,7 @@
 /* focusgarden 的 service worker
    策略：缓存优先 + 后台更新（stale-while-revalidate）
    改了页面内容不必动这里，下次打开自动换新；只有换缓存名时才需要改 CACHE */
-const CACHE = 'focusgarden-v1';
+const CACHE = 'focusgarden-v2';
 
 const ASSETS = [
   './',
