@@ -1,0 +1,17 @@
+{
+  "name": "快乐番茄",
+  "short_name": "快乐番茄",
+  "description": "25 分钟番茄钟，每天最多 15 个，记录存在本机。",
+  "lang": "zh-CN",
+  "id": "./happy-tomato.html",
+  "start_url": "./happy-tomato.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F4F7F4",
+  "theme_color": "#F7FAF7",
+  "icons": [
+    { "src": "icons/tomato-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/tomato-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/tomato-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

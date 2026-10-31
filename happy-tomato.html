@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#F7FAF7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="快乐番茄">
+<meta name="format-detection" content="telephone=no">
+<title>快乐番茄 · 番茄钟</title>
+<style>
+  :root{
+    --bg:#F4F7F4; --card:#FFFFFF;
+    --ink:#1F2521; --ink-2:#5E6A61; --ink-3:#9AA69C;
+    --line:#E4EAE5; --line-2:#EFF3EF;
+    --green:#2F6B4F; --green-2:#4A8A68;
+    --red:#D64541; --red-soft:#FBE9E8;
+    --gold-1:#FFE9A3; --gold-2:#E8B93F; --gold-3:#BE8B1E;
+    --brown:#9A7B4F;
+    --shadow:0 1px 3px rgba(24,40,30,.05), 0 6px 18px rgba(24,40,30,.05);
+    --sat:env(safe-area-inset-top, 0px);
+    --sab:env(safe-area-inset-bottom, 0px);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{-webkit-text-size-adjust:100%}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+    color:var(--ink); background:linear-gradient(180deg,#F9FBF9 0%,#F1F5F1 100%);
+    min-height:100dvh; -webkit-font-smoothing:antialiased; line-height:1.45;
+    overscroll-behavior-y:contain; touch-action:manipulation;
+  }
+  button,input,textarea{font-family:inherit;touch-action:manipulation;-webkit-touch-callout:none}
+  button{font-size:15px}
+  .app{max-width:520px;margin:0 auto;padding:0 12px calc(30px + var(--sab))}
+
+  /* ---------- 顶部 ---------- */
+  .hd{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:calc(10px + var(--sat)) 2px 10px;
+  }
+  .brand-title{
+    font-family:"聚珍新仿","QuanZhenXinFang","STFangsong","FangSong","Songti SC",serif;
+    font-size:30px;letter-spacing:.1em;margin:0;font-weight:400;line-height:1.1;
+  }
+  .tagline{margin:4px 0 0;font-size:12px;color:var(--ink-3);letter-spacing:.06em}
+  .tagline .hl{color:var(--red);font-weight:600}
+  .brand-title .hl{color:var(--red)}
+  .chips{display:flex;gap:7px;flex:none}
+  .chip{
+    background:#fff;border:1px solid var(--line);border-radius:11px;
+    padding:4px 9px;text-align:center;min-width:46px;box-shadow:var(--shadow);
+  }
+  .chip b{display:block;font-size:15px;line-height:1.15;font-variant-numeric:tabular-nums}
+  .chip span{font-size:9px;color:var(--ink-3)}
+
+  /* ---------- 卡片 ---------- */
+  .card{background:var(--card);border-radius:16px;padding:13px;box-shadow:var(--shadow);margin-bottom:9px}
+
+  /* ---------- 计时器 ---------- */
+  .timer{display:flex;flex-direction:column;align-items:center;padding:12px 13px 13px}
+  .ring-wrap{
+    position:relative;width:clamp(132px,40vw,168px);height:clamp(132px,40vw,168px);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+  }
+  .ring{width:100%;height:100%;transform:rotate(-90deg);display:block}
+  .ring-bg{fill:none;stroke:var(--line-2);stroke-width:8}
+  .ring-fg{fill:none;stroke:var(--green);stroke-width:8;stroke-linecap:round;
+    stroke-dasharray:552.92;stroke-dashoffset:552.92;
+    transition:stroke-dashoffset .28s linear, stroke .3s}
+  .timer.running .ring-fg{stroke:var(--red)}
+  .ring-in{position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:2px;pointer-events:none}
+  .time{font-size:clamp(30px,10vw,40px);font-weight:300;font-variant-numeric:tabular-nums;line-height:1}
+  .timer.running .time{color:var(--red)}
+  .phase{font-size:10.5px;color:var(--ink-3);letter-spacing:.1em}
+  .timer-btns{display:flex;gap:8px;width:100%;margin-top:10px}
+  .btn{
+    flex:1;border:1px solid transparent;border-radius:12px;padding:11px 12px;
+    font-size:14.5px;font-weight:550;cursor:pointer;min-height:44px;
+    display:flex;align-items:center;justify-content:center;
+    transition:transform .12s, background .16s;
+  }
+  .btn:active{transform:scale(.975)}
+  .btn.primary{background:var(--red);color:#fff;box-shadow:0 4px 12px rgba(214,69,65,.28)}
+  .btn.primary:disabled{background:var(--line);color:var(--ink-3);box-shadow:none}
+  .btn.ghost{background:#fff;border-color:var(--line);color:var(--ink-2)}
+  .btn.danger{background:#fff;border-color:#F0D6D4;color:var(--red)}
+
+  /* ---------- 今日 ---------- */
+  .today-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}
+  .today-head h2{font-size:13.5px;margin:0;font-weight:650}
+  .today-head b{font-size:16px;font-variant-numeric:tabular-nums}
+  .today-head small{color:var(--ink-3);font-weight:400;font-size:11.5px}
+  .slots{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+  .slot{
+    position:relative;aspect-ratio:1;border-radius:11px;
+    border:1.4px dashed var(--line);background:#FAFCFA;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;color:#C4CEC6;font-variant-numeric:tabular-nums;
+    cursor:pointer;padding:0;transition:transform .12s, box-shadow .16s;
+  }
+  .slot:active{transform:scale(.94)}
+  .slot.done{border-style:solid;border-color:transparent;color:#fff;background:var(--green);box-shadow:0 2px 8px rgba(47,107,79,.2)}
+  .slot.red{background:linear-gradient(140deg,#D4573F,#A52F22);box-shadow:0 2px 8px rgba(165,47,34,.24)}
+  .slot.gold{background:linear-gradient(140deg,var(--gold-1),var(--gold-2) 46%,var(--gold-3));
+    color:#5A3C04;text-shadow:0 1px 0 rgba(255,255,255,.45);box-shadow:0 2px 10px rgba(190,139,30,.3)}
+  .slot.rainbow{background:conic-gradient(from 0deg,#FF6B6B,#FFD93D,#6BCB77,#4D96FF,#B983FF,#FF6B6B);
+    color:#fff;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,.4);animation:hue 7s linear infinite}
+  @keyframes hue{to{filter:hue-rotate(360deg)}}
+  .slot .nd{position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:3.5px;height:3.5px;border-radius:50%;background:currentColor;opacity:.55}
+  .bar-wrap{height:4px;border-radius:99px;background:var(--line-2);overflow:hidden;margin-top:9px}
+  .bar{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#7FB795,var(--green));transition:width .45s}
+  .legend{display:flex;gap:9px;flex-wrap:wrap;margin-top:7px;font-size:9.5px;color:var(--ink-3)}
+  .legend span{display:flex;align-items:center;gap:3px}
+  .dotc{width:8px;height:8px;border-radius:2px;display:inline-block}
+  .dotc.n{background:linear-gradient(135deg,#DCEFE3,#35744F)}
+  .dotc.d{background:linear-gradient(135deg,#F7CFCA,#8C2F28)}
+  .dotc.g{background:linear-gradient(135deg,#EFC06A,#7A2220);box-shadow:inset 0 0 0 1px rgba(255,214,120,.7)}
+  .dotc.f{background:var(--red);border-radius:50%}
+
+  .badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:2px 7px;
+    border-radius:99px;background:var(--red-soft);color:var(--red);font-weight:550}
+  .badge.gold{background:#FDF2D2;color:#8A6410}
+  .badge.rain{background:linear-gradient(90deg,#FFE6E6,#FFF6DA,#E4F7E7,#E5EDFF,#F4E8FF);color:#5B4A8A}
+  .flower{width:11px;height:11px;display:inline-block;vertical-align:-1px;flex:none}
+
+  /* ---------- 日历 ---------- */
+  .cal-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .cal-h h2{font-size:13.5px;margin:0;font-weight:650}
+  .nav{display:flex;gap:5px}
+  .icon-btn{width:32px;height:32px;border-radius:9px;border:1px solid var(--line);
+    background:#fff;color:var(--ink-2);font-size:17px;line-height:1;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;padding:0 0 2px}
+  .icon-btn:active{background:#F2F6F2}
+  .icon-btn:disabled{opacity:.3}
+  .cal-week{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px}
+  .cal-week div{text-align:center;font-size:10px;color:var(--ink-3);padding:2px 0}
+  .cal-week div.we{color:var(--red);opacity:.75}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;touch-action:pan-y}
+  .cal-day{
+    position:relative;border-radius:8px;border:1.4px solid transparent;background:#FAFCFA;
+    aspect-ratio:1 / 1.22;display:flex;flex-direction:column;align-items:center;
+    padding:3px 0 7px;cursor:pointer;overflow:hidden;
+  }
+  .cal-day:active{background:#F2F6F2}
+  .cal-day.blank{background:transparent;pointer-events:none}
+  .cal-day .cn{font-size:12.5px;font-variant-numeric:tabular-nums;line-height:1.15;z-index:1}
+  .cal-day .cl{font-size:8px;color:var(--ink-3);line-height:1.25;z-index:1;
+    white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:clip;transform:scale(.96)}
+  .cal-day .cl.fest{color:var(--red);font-weight:600}
+  .cal-day .cl.term{color:var(--green);font-weight:600}
+  .cal-day .cl.mem{color:var(--brown)}
+  .cal-day .cl.birth{color:#A4402F;font-weight:600}
+  .cal-day .cl.warn{color:#A8762A;font-weight:600}
+  .cal-day.today{border-color:var(--ink)}
+  .cal-day.sel{border-color:var(--red);box-shadow:0 0 0 2px rgba(214,69,65,.12)}
+  .cal-day.future{opacity:.42}
+  .cal-day .mini{position:absolute;left:3px;right:3px;bottom:3px;height:2.5px;
+    border-radius:99px;background:var(--line-2);overflow:hidden}
+  .cal-day .mini i{display:block;height:100%;border-radius:99px;background:var(--green-2)}
+  .cal-day .mini i{background:linear-gradient(90deg,#DCEFE3,#35744F)}
+  .cal-day.red .mini i{background:linear-gradient(90deg,#F7CFCA,#8C2F28)}
+  .cal-day.gold .mini i{background:linear-gradient(90deg,#EFC06A,#7A2220)}
+  .cal-day .cf{position:absolute;top:1px;right:1px;z-index:2;line-height:0}
+  .cal-day .cf .flower{width:9px;height:9px}
+
+  /* ---------- 日详情 ---------- */
+  .day-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px}
+  .day-h h3{font-size:14px;margin:0;font-weight:650;display:flex;align-items:center;gap:4px}
+  .day-sub{font-size:10.5px;color:var(--ink-3);margin:2px 0 0}
+  .day-meta{display:flex;align-items:center;gap:10px;margin:0 0 9px}
+  .day-moon{flex:none;width:38px;height:38px}
+  .day-moon .moon{width:100%;height:100%;display:block}
+  .day-meta-text{min-width:0}
+  .day-meta-text b{font-size:13.5px;font-weight:650;color:var(--ink)}
+  .ev-list{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+  .ev{font-size:10px;padding:2px 7px;border-radius:99px;background:#F4F7F4;color:var(--ink-2)}
+  .ev.fest{background:var(--red-soft);color:var(--red);font-weight:600}
+  .ev.term{background:#E7F1EA;color:var(--green);font-weight:600}
+  .ev.mem{background:#F6EFE3;color:var(--brown)}
+  .ev.birth{background:#F7E6E2;color:#A4402F;font-weight:600}
+  .ev.warn{background:#F8EFDC;color:#A8762A;font-weight:600}
+  .mini-btn{border:1px solid var(--line);background:#fff;border-radius:9px;
+    padding:6px 10px;font-size:11.5px;color:var(--green);font-weight:550;cursor:pointer;flex:none}
+  .pom-list{display:flex;flex-direction:column;gap:5px;max-height:210px;overflow:auto;-webkit-overflow-scrolling:touch}
+  .pom-row{display:flex;gap:8px;align-items:flex-start;padding:7px 9px;border-radius:9px;
+    background:#FAFCFA;border:1px solid var(--line-2);cursor:pointer}
+  .pom-row .idx{flex:none;width:19px;height:19px;border-radius:6px;background:var(--green);color:#fff;
+    font-size:10px;display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .pom-row .idx{background:linear-gradient(135deg,#CFE9D8,#A6D2B6);color:#2F4A38}
+  .pom-row .body{flex:1;min-width:0}
+  .pom-row .note{font-size:12px;word-break:break-word;line-height:1.4}
+  .pom-row .note.empty{color:var(--ink-3);font-style:italic}
+  .pom-row .meta{font-size:9.5px;color:var(--ink-3);margin-top:1px}
+  .empty-tip{font-size:11.5px;color:var(--ink-3);text-align:center;padding:12px 0}
+
+  /* ---------- 统计 ---------- */
+  .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .stat{text-align:center;padding:8px 3px;border-radius:10px;background:#FAFCFA}
+  .stat b{display:block;font-size:16px;font-variant-numeric:tabular-nums;font-weight:650;line-height:1.25}
+  .stat span{font-size:9.5px;color:var(--ink-3)}
+
+  /* ---------- 工具 ---------- */
+  .tools{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .tools .btn{min-height:42px;font-size:13px}
+  .tip{font-size:10.5px;color:var(--ink-3);line-height:1.7;margin:9px 0 0}
+
+  /* ---------- 底部弹层 ---------- */
+  .scrim{position:fixed;inset:0;background:rgba(20,26,22,.38);z-index:55;opacity:0;
+    pointer-events:none;transition:opacity .26s;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+  .scrim.open{opacity:1;pointer-events:auto}
+  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:60;max-width:520px;margin:0 auto;
+    background:#fff;border-radius:20px 20px 0 0;padding:6px 16px calc(14px + var(--sab));
+    box-shadow:0 -10px 44px rgba(24,40,30,.16);transform:translateY(105%);
+    transition:transform .3s cubic-bezier(.22,.9,.3,1)}
+  .sheet.open{transform:translateY(0)}
+  .grab{width:34px;height:4px;border-radius:99px;background:var(--line);margin:5px auto 11px}
+  .sheet h3{margin:0 0 2px;font-size:15px;font-weight:650}
+  .m-sub{font-size:10.5px;color:var(--ink-3);margin:0 0 9px}
+  .sheet textarea{width:100%;min-height:84px;resize:none;border:1.4px solid var(--line);
+    border-radius:11px;padding:10px;font-size:16px;line-height:1.5;background:#FAFCFA;
+    color:var(--ink);outline:none}
+  .sheet textarea:focus{border-color:var(--green-2);background:#fff}
+  .m-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px}
+  .m-foot span{font-size:10.5px;color:var(--ink-3)}
+  .m-foot .acts{display:flex;gap:7px;flex:1;max-width:210px}
+  .m-foot .btn{padding:10px;font-size:14px;min-height:42px}
+
+  .toast{position:fixed;left:50%;bottom:calc(22px + var(--sab));transform:translate(-50%,14px);
+    background:rgba(31,37,33,.95);color:#fff;padding:9px 16px;border-radius:99px;
+    font-size:12px;opacity:0;pointer-events:none;transition:.28s;z-index:70;
+    max-width:86vw;text-align:center}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
+  }
+</style>
+<link rel="manifest" href="manifest-tomato.webmanifest">
+<link rel="apple-touch-icon" href="icons/tomato-180.png">
+</head>
+<body>
+
+<div class="app">
+  <header class="hd">
+    <div>
+      <h1 class="brand-title">快乐<span class="hl">番茄</span></h1>
+      <p class="tagline">记录每天的<span class="hl">专注</span>时间</p>
+    </div>
+    <div class="chips">
+      <div class="chip"><b id="hdToday">0</b><span>今日</span></div>
+      <div class="chip"><b id="hdStreak">0</b><span>连续</span></div>
+    </div>
+  </header>
+
+  <section class="card timer" id="timerCard">
+    <div class="ring-wrap" id="ringWrap">
+      <svg class="ring" viewBox="0 0 200 200" aria-hidden="true">
+        <circle class="ring-bg" cx="100" cy="100" r="88"></circle>
+        <circle class="ring-fg" id="ringFg" cx="100" cy="100" r="88"></circle>
+      </svg>
+      <div class="ring-in">
+        <div class="time" id="timeText">20:00</div>
+        <div class="phase" id="phaseText">准备开始</div>
+      </div>
+    </div>
+    <div class="timer-btns">
+      <button class="btn primary" id="btnStart">开始专注</button>
+      <button class="btn ghost" id="btnReset">重置</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="today-head">
+      <h2>今日番茄 <b id="todayCount">0</b><small> / 15</small></h2>
+      <div id="todayBadges" style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end"></div>
+    </div>
+    <div class="slots" id="slots"></div>
+    <div class="bar-wrap"><div class="bar" id="bar"></div></div>
+    <div class="legend">
+      <span><i class="dotc n"></i>1–5 绿</span>
+      <span><i class="dotc d"></i>6–10 红</span>
+      <span><i class="dotc g"></i>11–15 红金</span>
+      <span><i class="dotc f"></i>满 5 出花</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="cal-h">
+      <h2 id="calTitle">—</h2>
+      <div class="nav">
+        <button class="icon-btn" id="calPrev" aria-label="上个月">‹</button>
+        <button class="icon-btn" id="calToday" aria-label="回到本月" style="width:auto;padding:0 9px;font-size:11px">今</button>
+        <button class="icon-btn" id="calNext" aria-label="下个月">›</button>
+      </div>
+    </div>
+    <div class="cal-week" id="calWeek"></div>
+    <div class="cal-grid" id="calGrid"></div>
+  </section>
+
+  <section class="card" id="dayCard">
+    <div class="day-h">
+      <h3 id="dayTitle">—</h3>
+      <button class="mini-btn" id="btnAddPom" style="display:none">+ 补记</button>
+    </div>
+    <div class="day-meta">
+      <span class="day-moon" id="dayMoon"></span>
+      <div class="day-meta-text">
+        <b id="dayPhase">—</b>
+        <p class="day-sub" id="daySub"></p>
+      </div>
+    </div>
+    <div class="ev-list" id="dayEvents"></div>
+    <div class="pom-list" id="pomList"></div>
+  </section>
+
+  <section class="card">
+    <div class="today-head" style="margin-bottom:8px"><h2>统计</h2></div>
+    <div class="stat-grid">
+      <div class="stat"><b id="stTotal">0</b><span>累计番茄</span></div>
+      <div class="stat"><b id="stHours">0h</b><span>累计专注</span></div>
+      <div class="stat"><b id="stDays">0</b><span>达标天数</span></div>
+      <div class="stat"><b id="stBest">0</b><span>最长连续</span></div>
+      <div class="stat"><b id="stWeek">0</b><span>本周番茄</span></div>
+      <div class="stat"><b id="stRate">0%</b><span>本月达标率</span></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="today-head" style="margin-bottom:8px"><h2>数据</h2></div>
+    <div class="tools">
+      <button class="btn ghost" id="btnExportJson">导出 JSON</button>
+      <button class="btn ghost" id="btnExportCsv">导出 CSV</button>
+      <button class="btn ghost" id="btnImport">导入 JSON</button>
+      <button class="btn danger" id="btnClear">清空数据</button>
+      <input type="file" id="fileInput" accept=".json,application/json" hidden>
+    </div>
+    <p class="tip">数据存在本机浏览器，清理缓存会丢失，建议定期导出备份。</p>
+  </section>
+
+  <p class="tip" style="text-align:center;margin-top:14px">快乐番茄 · 每个番茄钟 25 分钟 · 每日 5 个达标 · 15 个封顶</p>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet">
+  <div class="grab"></div>
+  <h3 id="mTitle">番茄说明</h3>
+  <p class="m-sub" id="mSub"></p>
+  <textarea id="mInput" maxlength="100" placeholder="这 25 分钟做了什么？（可留空）"></textarea>
+  <div class="m-foot">
+    <span id="mCount">0 / 100</span>
+    <div class="acts">
+      <button class="btn ghost" id="mCancel">取消</button>
+      <button class="btn primary" id="mSave">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ==================================================================
+   常量
+   ================================================================== */
+var KEY         = 'kuaile.fanqie.v1';   // 与桌面版分开存档
+var TIMER_KEY   = 'kuaile.fanqie.timer.v1';
+var MINUTES     = 25;                  // 每个番茄钟 25 分钟
+var POMO_MS     = MINUTES * 60 * 1000;
+var MAX_PER_DAY = 15;
+var MIN_PER_DAY = 5;                   // 达标线
+var RED_FROM    = 6;
+var GOLD_FROM   = 11;
+var RAINBOW_FROM= 99;   // 本版只用 绿 / 红 / 金红 三档
+var NOTE_MAX    = 100;
+var WEEK_START  = 1;
+
+var WEEK_CN = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+var WEEK_S  = ['周日','周一','周二','周三','周四','周五','周六'];
+var WEEK_HD = ['一','二','三','四','五','六','日'];
+
+/* ==================================================================
+   农历
+   ================================================================== */
+var LUNAR_INFO = [
+0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,
+0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,
+0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,
+0x06566,0x0d4a0,0x0ea50,0x06e95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,
+0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557,
+0x06ca0,0x0b550,0x15355,0x04da0,0x0a5b0,0x14573,0x052b0,0x0a9a8,0x0e950,0x06aa0,
+0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,
+0x096d0,0x04dd5,0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b6a0,0x195a6,
+0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570,
+0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06b58,0x055c0,0x0ab60,0x096d5,0x092e0,
+0x0c960,0x0d954,0x0d4a0,0x0da50,0x07552,0x056a0,0x0abb7,0x025d0,0x092d0,0x0cab5,
+0x0a950,0x0b4a0,0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,0x0a930,
+0x07954,0x06aa0,0x0ad50,0x05b52,0x04b60,0x0a6e6,0x0a4e0,0x0d260,0x0ea65,0x0d530,
+0x05aa0,0x076a3,0x096d0,0x04afb,0x04ad0,0x0a4d0,0x1d0b6,0x0d250,0x0d520,0x0dd45,
+0x0b5a0,0x056d0,0x055b2,0x049b0,0x0a577,0x0a4b0,0x0aa50,0x1b255,0x06d20,0x0ada0,
+0x14b63,0x09370,0x049f8,0x04970,0x064b0,0x168a6,0x0ea50,0x06b20,0x1a6c4,0x0aae0,
+0x0a2e0,0x0d2e3,0x0c960,0x0d557,0x0d4a0,0x0da50,0x05d55,0x056a0,0x0a6d0,0x055d4,
+0x052d0,0x0a9b8,0x0a950,0x0b4a0,0x0b6a6,0x0ad50,0x055a0,0x0aba4,0x0a5b0,0x052b0,
+0x0b273,0x06930,0x07337,0x06aa0,0x0ad50,0x14b55,0x04b60,0x0a570,0x054e4,0x0d160,
+0x0e968,0x0d520,0x0daa0,0x16aa6,0x056d0,0x04ae0,0x0a9d4,0x0a2d0,0x0d150,0x0f252,
+0x0d520
+];
+var GAN = '甲乙丙丁戊己庚辛壬癸';
+var ZHI = '子丑寅卯辰巳午未申酉戌亥';
+var ZODIAC = '鼠牛虎兔龙蛇马羊猴鸡狗猪';
+var MONTH_CN = ['正','二','三','四','五','六','七','八','九','十','冬','腊'];
+var NUM_CN = ['一','二','三','四','五','六','七','八','九','十'];
+
+function leapMonth(y){ return LUNAR_INFO[y - 1900] & 0xf; }
+function leapDays(y){ return leapMonth(y) ? ((LUNAR_INFO[y - 1900] & 0x10000) ? 30 : 29) : 0; }
+function monthDays(y, m){ return (LUNAR_INFO[y - 1900] & (0x10000 >> m)) ? 30 : 29; }
+function yearDays(y){
+  var sum = 348;
+  for(var i = 0x8000; i > 0x8; i >>= 1){ sum += (LUNAR_INFO[y - 1900] & i) ? 1 : 0; }
+  return sum + leapDays(y);
+}
+function dayName(d){
+  if(d === 10) return '初十';
+  if(d === 20) return '二十';
+  if(d === 30) return '三十';
+  return ['初','十','廿','三'][Math.floor(d / 10)] + NUM_CN[d % 10 - 1];
+}
+function solar2lunar(y, m, d){
+  if(y < 1900 || y > 2100) return null;
+  var offset = Math.round((Date.UTC(y, m - 1, d) - Date.UTC(1900, 0, 31)) / 86400000);
+  var i, temp = 0;
+  for(i = 1900; i < 2101 && offset > 0; i++){ temp = yearDays(i); offset -= temp; }
+  if(offset < 0){ offset += temp; i--; }
+  var year = i, leap = leapMonth(year), isLeap = false;
+  for(i = 1; i < 13 && offset > 0; i++){
+    if(leap > 0 && i === leap + 1 && !isLeap){ --i; isLeap = true; temp = leapDays(year); }
+    else { temp = monthDays(year, i); }
+    if(isLeap && i === leap + 1) isLeap = false;
+    offset -= temp;
+  }
+  if(offset === 0 && leap > 0 && i === leap + 1){
+    if(isLeap){ isLeap = false; } else { isLeap = true; --i; }
+  }
+  if(offset < 0){ offset += temp; --i; }
+  var month = i, day = offset + 1;
+  var gz = (year - 4) % 60;
+  return {
+    y: year, m: month, d: day, isLeap: isLeap,
+    monthCn: (isLeap ? '闰' : '') + MONTH_CN[month - 1] + '月',
+    dayCn: dayName(day),
+    text: GAN.charAt(gz % 10) + ZHI.charAt(gz % 12) + '年 ' +
+          (isLeap ? '闰' : '') + MONTH_CN[month - 1] + '月' + dayName(day)
+  };
+}
+
+/* ==================================================================
+   二十四节气（太阳视黄经法，按北京时间取日期）
+   ================================================================== */
+var TERM_NAMES = ['春分','清明','谷雨','立夏','小满','芒种','夏至','小暑','大暑','立秋',
+                  '处暑','白露','秋分','寒露','霜降','立冬','小雪','大雪','冬至','小寒',
+                  '大寒','立春','雨水','惊蛰'];
+
+function sunLongitude(jd){
+  var T = (jd - 2451545.0) / 36525;
+  var L0 = 280.46646 + 36000.76983 * T + 0.0003032 * T * T;
+  var M = 357.52911 + 35999.05029 * T - 0.0001537 * T * T;
+  var Mr = M * Math.PI / 180;
+  var C = (1.914602 - 0.004817 * T - 0.000014 * T * T) * Math.sin(Mr)
+        + (0.019993 - 0.000101 * T) * Math.sin(2 * Mr)
+        + 0.000289 * Math.sin(3 * Mr);
+  var omega = (125.04 - 1934.136 * T) * Math.PI / 180;
+  var lambda = L0 + C - 0.00569 - 0.00478 * Math.sin(omega);
+  return ((lambda % 360) + 360) % 360;
+}
+
+function julianDay(y, m, d){
+  if(m <= 2){ y -= 1; m += 12; }
+  var A = Math.floor(y / 100);
+  var B = 2 - A + Math.floor(A / 4);
+  return Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + d + B - 1524.5;
+}
+
+var termCache = {};
+
+/* 返回 {'MM-DD': '节气名'} */
+function termsOfYear(year){
+  if(termCache[year]) return termCache[year];
+  var map = {};
+  var jd0 = julianDay(year, 1, 1) - 2;
+  var prev = sunLongitude(jd0);
+
+  for(var k = 1; k <= 375; k++){
+    var jd = jd0 + k;
+    var lon = sunLongitude(jd);
+    var diff = lon - prev;
+    if(diff < 0) diff += 360;
+    if(diff > 0 && diff < 5){
+      var start = Math.ceil(prev / 15) * 15;
+      for(var a = start; a < prev + diff + 1e-9; a += 15){
+        var frac = (a - prev) / diff;
+        if(frac < 0) frac = 0;
+        if(frac > 1) frac = 1;
+        var jdx = jd0 + k - 1 + frac;
+        // 转北京时间（UTC+8）取日期
+        var dt = new Date((jdx - 2440587.5 + 8 / 24) * 86400000);
+        var mm = dt.getUTCMonth() + 1, dd = dt.getUTCDate();
+        var lonIdx = Math.round((((a % 360) + 360) % 360) / 15) % 24;
+        map[pad2(mm) + '-' + pad2(dd)] = TERM_NAMES[lonIdx];
+      }
+    }
+    prev = lon;
+  }
+  termCache[year] = map;
+  return map;
+}
+
+/* ==================================================================
+   纪念日数据
+   t: fest 节日 / term 节气 / mem 纪念
+   s: 日历格里的短标签   f: 详情里的完整名称
+   ================================================================== */
+
+/* 固定公历日 */
+var EV_LUNAR = [
+  { m:1,  d:1,  s:'春节',   f:'春节', t:'fest' },
+  { m:1,  d:15, s:'元宵',   f:'元宵节', t:'fest' },
+  { m:3,  d:3,  s:'宜春游', f:'三月三 · 宜春游', t:'fest' },
+  { m:5,  d:5,  s:'端午',   f:'端午节', t:'fest' },
+  { m:7,  d:7,  s:'宜乞巧', f:'七月七 · 宜乞巧', t:'fest' },
+  { m:7,  d:15, s:'中元',   f:'中元节', t:'fest' },
+  { m:8,  d:15, s:'中秋',   f:'中秋节', t:'fest' },
+  { m:9,  d:9,  s:'重阳',   f:'重阳节', t:'fest' },
+  { m:10, d:1,  s:'送寒衣', f:'十月初一 · 送寒衣', t:'fest' },
+  { m:12, d:8,  s:'腊八',   f:'腊八节', t:'fest' }
+];
+
+var EV_SOLAR = [
+  /* 1 月 */
+  { m:1,  d:1,  s:'元旦',   f:'元旦', t:'fest' },
+  { m:1,  d:8,  s:'周恩来', f:'周恩来逝世纪念日（1976）', t:'mem' },
+  { m:1,  d:12, s:'刘胡兰', f:'刘胡兰纪念日（1947 就义）', t:'mem', n:'“生的伟大，死的光荣”，年龄最小的女烈士' },
+  { m:1,  d:21, s:'列宁',   f:'列宁逝世纪念日（1924）', t:'mem' },
+  { m:1,  d:27, s:'宋庆龄', f:'宋庆龄诞辰（1893）', t:'birth', n:'共和国名誉主席，“国之瑰宝”' },
+  /* 2 月 */
+  { m:2,  d:4,  s:'邓颖超', f:'邓颖超诞辰（1904）', t:'birth' },
+  { m:2,  d:7,  s:'二七',   f:'二七纪念日（1923）', t:'birth', n:'京汉铁路大罢工，中共早期工运起点' },
+  { m:2,  d:23, s:'杨靖宇', f:'杨靖宇纪念日（1940 牺牲）', t:'mem', n:'东北抗联主要创建者' },
+  /* 3 月 */
+  { m:3,  d:5,  s:'学雷锋', f:'学雷锋纪念日', t:'birth' },
+  { m:3,  d:5,  s:'周恩来', f:'周恩来诞辰（1898）', t:'birth' },
+  { m:3,  d:5,  s:'何泽慧', f:'何泽慧诞辰（1914）', t:'birth', n:'核物理学家，“中国居里夫人”，与钱三强共发现铀三分裂、四分裂' },
+  { m:3,  d:7,  s:'竺可桢', f:'竺可桢诞辰（1890）', t:'birth', n:'中国现代气象学、地理学奠基人' },
+  { m:3,  d:8,  s:'妇女节', f:'三八妇女节', t:'fest' },
+  { m:3,  d:13, s:'赖宁',   f:'赖宁纪念日（1988 救火牺牲）', t:'mem', n:'少年英雄，“英雄少年”' },
+  { m:3,  d:14, s:'马克思', f:'马克思逝世纪念日（1883）', t:'mem' },
+  { m:3,  d:18, s:'巴黎公社', f:'巴黎公社纪念日（1871 起义）', t:'birth', n:'人类第一个无产阶级政权尝试' },
+  { m:3,  d:28, s:'高尔基', f:'高尔基诞辰（1868）', t:'birth', n:'苏联文学奠基人' },
+  /* 4 月 */
+  { m:4,  d:22, s:'列宁',   f:'列宁诞辰（1870）', t:'birth' },
+  { m:4,  d:24, s:'航天日', f:'中国航天日', t:'birth', n:'1970 东方红一号发射成功' },
+  /* 5 月 */
+  { m:5,  d:1,  s:'劳动节', f:'国际劳动节', t:'fest' },
+  { m:5,  d:4,  s:'青年节', f:'五四青年节（1919）', t:'fest' },
+  { m:5,  d:5,  s:'马克思', f:'马克思诞辰（1818）', t:'birth' },
+  { m:5,  d:9,  s:'卫国战争', f:'苏联卫国战争胜利纪念日（1945）', t:'mem' },
+  { m:5,  d:14, s:'焦裕禄', f:'焦裕禄纪念日（1964 病逝）', t:'mem', n:'“县委书记的榜样”' },
+  { m:5,  d:28, s:'童第周', f:'童第周诞辰（1902）', t:'birth', n:'实验胚胎学奠基人，“中国克隆之父”' },
+  { m:5,  d:29, s:'宋庆龄', f:'宋庆龄逝世纪念日（1981）', t:'mem' },
+  { m:5,  d:30, s:'五卅',   f:'五卅纪念日（1925）', t:'birth', n:'反帝爱国运动' },
+  /* 6 月 */
+  { m:6,  d:1,  s:'儿童节', f:'六一儿童节', t:'fest' },
+  { m:6,  d:3,  s:'虎门销烟', f:'虎门销烟纪念日（1839）', t:'warn', n:'林则徐开始销烟' },
+  { m:6,  d:25, s:'邓稼先', f:'邓稼先诞辰（1924）', t:'birth', n:'“两弹元勋”' },
+  { m:6,  d:26, s:'禁毒日', f:'国际禁毒日', t:'warn' },
+  /* 7 月 */
+  { m:7,  d:1,  s:'建党节', f:'七一建党节', t:'fest' },
+  { m:7,  d:6,  s:'朱德',   f:'朱德逝世纪念日（1976）', t:'mem' },
+  { m:7,  d:7,  s:'七七',   f:'七七抗战警示日（1937）', t:'warn', n:'卢沟桥事变' },
+  { m:7,  d:11, s:'邓颖超', f:'邓颖超逝世纪念日（1992）', t:'mem' },
+  { m:7,  d:15, s:'秋瑾',   f:'秋瑾纪念日（1907 就义）', t:'mem', n:'“鉴湖女侠”，近代民主革命女先驱' },
+  { m:7,  d:31, s:'731',    f:'731 部队反人类罪行警示日', t:'warn' },
+  /* 8 月 */
+  { m:8,  d:1,  s:'建军节', f:'八一建军节（1927 南昌起义）', t:'fest' },
+  { m:8,  d:2,  s:'赵一曼', f:'赵一曼纪念日（1936 就义）', t:'mem', n:'东北抗日联军女政委' },
+  { m:8,  d:5,  s:'恩格斯', f:'恩格斯逝世纪念日（1895）', t:'mem' },
+  { m:8,  d:19, s:'八一九', f:'苏联八一九事件反思日（1991）', t:'warn' },
+  /* 9 月 */
+  { m:9,  d:3,  s:'抗战胜利', f:'中国抗日战争胜利纪念日（1945）', t:'birth' },
+  { m:9,  d:4,  s:'向警予', f:'向警予诞辰（1895）', t:'birth', n:'中共唯一女创始人，妇女运动领袖' },
+  { m:9,  d:9,  s:'毛泽东', f:'毛泽东逝世纪念日（1976）', t:'mem' },
+  { m:9,  d:18, s:'九一八', f:'九一八警示日（1931）', t:'warn', n:'东北沦陷，多地鸣警报' },
+  { m:9,  d:25, s:'鲁迅',   f:'鲁迅诞辰（1881）', t:'birth' },
+  { m:9,  d:30, s:'烈士纪念', f:'烈士纪念日', t:'mem' },
+  /* 10 月 */
+  { m:10, d:1,  s:'国庆节', f:'十一国庆节', t:'fest' },
+  { m:10, d:10, s:'辛亥革命', f:'辛亥革命纪念日（1911 武昌起义）', t:'birth' },
+  { m:10, d:16, s:'钱三强', f:'钱三强诞辰（1913）', t:'birth', n:'中国原子能科学之父，“两弹一星”元勋' },
+  { m:10, d:19, s:'鲁迅',   f:'鲁迅逝世纪念日（1936）', t:'mem' },
+  { m:10, d:21, s:'缪伯英', f:'缪伯英诞辰（1899）', t:'birth', n:'中共第一位女党员' },
+  { m:10, d:26, s:'李四光', f:'李四光诞辰（1889）', t:'birth', n:'中国地质力学创立者' },
+  /* 11 月 */
+  { m:11, d:7,  s:'十月革命', f:'十月革命节（1917）', t:'birth' },
+  { m:11, d:12, s:'华罗庚', f:'华罗庚诞辰（1910）', t:'birth', n:'中国现代数学之父' },
+  { m:11, d:12, s:'白求恩', f:'白求恩纪念日（1939 逝世）', t:'mem' },
+  { m:11, d:14, s:'江竹筠', f:'江竹筠（江姐）纪念日（1949 就义）', t:'mem', n:'红岩英烈代表' },
+  { m:11, d:28, s:'恩格斯', f:'恩格斯诞辰（1820）', t:'birth' },
+  { m:11, d:29, s:'孔繁森', f:'孔繁森纪念日（1994 殉职）', t:'mem', n:'援藏干部楷模' },
+  /* 12 月 */
+  { m:12, d:1,  s:'朱德',   f:'朱德诞辰（1886）', t:'birth' },
+  { m:12, d:5,  s:'郭永怀', f:'郭永怀纪念日（1968 空难殉职）', t:'mem', n:'“两弹一星”唯一烈士，以生命守护绝密数据' },
+  { m:12, d:9,  s:'一二九', f:'一二·九运动纪念日（1935）', t:'birth', n:'北平学生抗日救亡' },
+  { m:12, d:11, s:'钱学森', f:'钱学森诞辰（1911）', t:'birth', n:'中国航天之父、导弹之父' },
+  { m:12, d:13, s:'公祭日', f:'南京大屠杀死难者国家公祭日', t:'mem' },
+  { m:12, d:23, s:'林巧稚', f:'林巧稚诞辰（1901）', t:'birth', n:'中国妇产科学奠基人' },
+  { m:12, d:25, s:'苏联解体', f:'苏联解体反思日（1991）', t:'warn' },
+  { m:12, d:26, s:'毛泽东', f:'毛泽东诞辰（1893）', t:'birth' }
+];
+
+var EV_RANK = { fest:0, term:1, birth:2, mem:3, warn:4 };
+
+/* 某天的全部事件，按优先级排序 */
+function eventsOf(y, m, d, L){
+  var out = [];
+  var md = pad2(m) + '-' + pad2(d);
+
+  var t = termsOfYear(y)[md];
+  if(t) out.push({ s: t, f: t, t: t === '清明' ? 'fest' : 'term' });
+
+  for(var i = 0; i < EV_SOLAR.length; i++){
+    var e = EV_SOLAR[i];
+    if(e.m === m && e.d === d) out.push(e);
+  }
+  if(L && !L.isLeap){
+    for(var j = 0; j < EV_LUNAR.length; j++){
+      var l = EV_LUNAR[j];
+      if(l.m === L.m && l.d === L.d) out.push(l);
+    }
+  }
+  out.sort(function(a, b){ return EV_RANK[a.t] - EV_RANK[b.t]; });
+  return out;
+}
+
+/* ==================================================================
+   日期工具
+   ================================================================== */
+function pad2(n){ return n < 10 ? '0' + n : '' + n; }
+function ymd(dt){ return dt.getFullYear() + '-' + pad2(dt.getMonth() + 1) + '-' + pad2(dt.getDate()); }
+function parseYmd(s){ var p = String(s).split('-'); return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2])); }
+function todayKey(){ return ymd(new Date()); }
+function midnight(dt){ return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate()); }
+function startOfWeek(dt){
+  var x = midnight(dt), w = (x.getDay() - WEEK_START + 7) % 7;
+  x.setDate(x.getDate() - w);
+  return x;
+}
+function daysBetween(a, b){ return Math.round((midnight(b) - midnight(a)) / 86400000); }
+
+/* ==================================================================
+   数据
+   ================================================================== */
+var db = { v: 1, days: {} };
+
+function loadDB(){
+  try{
+    var raw = localStorage.getItem(KEY);
+    if(!raw) return { v: 1, days: {} };
+    var obj = JSON.parse(raw);
+    if(!obj || typeof obj !== 'object' || !obj.days || typeof obj.days !== 'object') return { v: 1, days: {} };
+    var days = {}, keys = Object.keys(obj.days);
+    for(var i = 0; i < keys.length; i++){
+      var k = keys[i];
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(k)) continue;
+      var rec = obj.days[k], arr = (rec && Array.isArray(rec.poms)) ? rec.poms : [], poms = [];
+      for(var j = 0; j < arr.length && poms.length < MAX_PER_DAY; j++){
+        var p = arr[j];
+        if(!p || typeof p !== 'object') continue;
+        var t = Number(p.t);
+        poms.push({ t: isFinite(t) && t > 0 ? t : 0, n: String(p.n == null ? '' : p.n).slice(0, NOTE_MAX) });
+      }
+      if(poms.length) days[k] = { poms: poms };
+    }
+    return { v: 1, days: days };
+  }catch(e){ return { v: 1, days: {} }; }
+}
+
+function saveDB(){
+  try{
+    var keys = Object.keys(db.days);
+    for(var i = 0; i < keys.length; i++){
+      if(!db.days[keys[i]] || !db.days[keys[i]].poms || !db.days[keys[i]].poms.length) delete db.days[keys[i]];
+    }
+    localStorage.setItem(KEY, JSON.stringify(db));
+    return true;
+  }catch(e){ toast('存档失败：存储空间不足'); return false; }
+}
+
+function pomsOf(key){ var r = db.days[key]; return (r && Array.isArray(r.poms)) ? r.poms : []; }
+function countOf(key){ return pomsOf(key).length; }
+function addPom(key, note, t){
+  if(countOf(key) >= MAX_PER_DAY) return -1;
+  if(!db.days[key]) db.days[key] = { poms: [] };
+  db.days[key].poms.push({ t: t || 0, n: String(note || '').slice(0, NOTE_MAX) });
+  return db.days[key].poms.length - 1;
+}
+function levelOf(i){ return i >= GOLD_FROM ? 'g' : (i >= RED_FROM ? 'd' : 'n'); }
+
+/* 第 N 个番茄的配色：[浅, 深, 文字色] */
+var POMO_STYLE = [
+  ['#DCEFE3','#C4E4CF','#2F4A38'],  // 1  极浅绿
+  ['#C4E4CF','#A6D6B7','#2A4533'],  // 2
+  ['#A6D6B7','#84C09B','#1F3B2A'],  // 3
+  ['#84C09B','#5FA77D','#1F3B2A'],  // 4
+  ['#5FA77D','#35744F','#FFFFFF'],  // 5  深绿
+  ['#F7CFCA','#EFB2AA','#5E211D'],  // 6  浅红
+  ['#EFB2AA','#E3938A','#5E211D'],  // 7
+  ['#E3938A','#CF6E63','#FFFFFF'],  // 8
+  ['#CF6E63','#B24C41','#FFFFFF'],  // 9
+  ['#B24C41','#8C2F28','#FFFFFF'],  // 10 深红
+  ['#EFC06A','#C2433A','#FFFFFF'],  // 11 红底压金
+  ['#E9B45C','#B03A33','#FFFFFF'],  // 12
+  ['#E2A84E','#9E322C','#FFFFFF'],  // 13
+  ['#DA9B40','#8C2A26','#FFFFFF'],  // 14
+  ['#D08E33','#7A2220','#FFFFFF']   // 15
+];
+
+function pomoStyle(n){
+  var c = POMO_STYLE[Math.max(0, Math.min(POMO_STYLE.length - 1, n - 1))];
+  var s = 'background:linear-gradient(135deg,' + c[0] + ' 0%,' + c[1] + ' 100%);color:' + c[2];
+  if(n >= GOLD_FROM) s += ';box-shadow:inset 0 0 0 1.5px rgba(255,214,120,.55)';
+  return s;
+}
+
+function flowerSVG(cls){
+  return '<svg class="flower ' + (cls || '') + '" viewBox="0 0 24 24" aria-hidden="true">' +
+    '<g fill="#D64541"><circle cx="12" cy="6.4" r="4.1"/><circle cx="17.6" cy="12" r="4.1"/>' +
+    '<circle cx="12" cy="17.6" r="4.1"/><circle cx="6.4" cy="12" r="4.1"/></g>' +
+    '<circle cx="12" cy="12" r="3.1" fill="#F0C04A"/></svg>';
+}
+
+/* ==================================================================
+   番茄钟
+   ================================================================== */
+var timer = { running: false, endAt: 0, remain: POMO_MS };
+var tickId = null, audioCtx = null, wakeLock = null;
+
+function loadTimer(){
+  try{
+    var o = JSON.parse(localStorage.getItem(TIMER_KEY) || 'null');
+    if(!o || typeof o !== 'object') return null;
+    var remain = Number(o.remain), endAt = Number(o.endAt);
+    if(!isFinite(remain) || remain <= 0 || remain > POMO_MS) remain = POMO_MS;
+    return { running: !!o.running, endAt: isFinite(endAt) ? endAt : 0, remain: remain };
+  }catch(e){ return null; }
+}
+function saveTimer(){
+  try{ localStorage.setItem(TIMER_KEY, JSON.stringify({ running: timer.running, endAt: timer.endAt, remain: timer.remain })); }catch(e){}
+}
+function clearTimerStore(){ try{ localStorage.removeItem(TIMER_KEY); }catch(e){} }
+
+function stopLoop(){ if(tickId !== null){ clearInterval(tickId); tickId = null; } }
+function loop(){ stopLoop(); tickId = setInterval(tickTimer, 250); tickTimer(); }
+
+function tickTimer(){
+  if(!timer.running){ stopLoop(); return; }
+  var left = timer.endAt - Date.now();
+  if(left <= 0){ completeTimer(); return; }
+  renderTimer(left);
+}
+
+function startTimer(){
+  if(timer.running) return;
+  if(arrivedDay !== todayKey()){ arrivedDay = todayKey(); renderAll(); }
+  if(countOf(todayKey()) >= MAX_PER_DAY){ toast('今天的 15 个已完成'); return; }
+  ensureAudio();
+  playStart();
+  timer.running = true;
+  timer.endAt = Date.now() + timer.remain;
+  saveTimer(); loop(); renderTimer(); requestWakeLock();
+}
+
+function pauseTimer(){
+  if(!timer.running) return;
+  timer.remain = Math.max(0, timer.endAt - Date.now());
+  timer.running = false; timer.endAt = 0;
+  stopLoop(); saveTimer(); renderTimer(); releaseWakeLock();
+}
+
+function resetTimer(){
+  timer = { running: false, endAt: 0, remain: POMO_MS };
+  stopLoop(); clearTimerStore(); renderTimer(); releaseWakeLock();
+}
+
+function completeTimer(){
+  stopLoop();
+  timer = { running: false, endAt: 0, remain: POMO_MS };
+  clearTimerStore(); releaseWakeLock();
+
+  var key = todayKey();
+  if(countOf(key) >= MAX_PER_DAY){
+    toast('今天已满 15 个，这一轮不计数');
+    renderTimer(); renderAll(); return;
+  }
+  var idx = addPom(key, '', Date.now());
+  saveDB();
+  playFinish(); buzz([40, 60, 40]);
+  renderTimer(); renderAll();
+  openSheet(key, idx, false);
+  toast('完成 1 个 · 第 ' + (idx + 1) + ' 个');
+}
+
+function ensureAudio(){
+  if(audioCtx){ if(audioCtx.state === 'suspended') audioCtx.resume(); return; }
+  try{
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if(AC) audioCtx = new AC();
+  }catch(e){ audioCtx = null; }
+}
+function beepAt(freq, when, dur, vol){
+  var osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+  osc.type = 'sine'; osc.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, when);
+  g.gain.exponentialRampToValueAtTime(vol, when + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+  osc.connect(g).connect(audioCtx.destination);
+  osc.start(when); osc.stop(when + dur + 0.02);
+}
+function playStart(){ if(!audioCtx) return; try{ beepAt(880, audioCtx.currentTime, 0.14, 0.13); }catch(e){} }
+function playFinish(){
+  if(!audioCtx) return;
+  try{ var t0 = audioCtx.currentTime; for(var i = 0; i < 3; i++) beepAt(880, t0 + i * 0.2, 0.13, 0.16); }catch(e){}
+}
+function buzz(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
+
+function requestWakeLock(){
+  try{
+    if(!('wakeLock' in navigator) || wakeLock) return;
+    navigator.wakeLock.request('screen').then(function(w){
+      wakeLock = w;
+      w.addEventListener('release', function(){ wakeLock = null; });
+    }).catch(function(){});
+  }catch(e){}
+}
+function releaseWakeLock(){ try{ if(wakeLock){ wakeLock.release(); wakeLock = null; } }catch(e){} }
+
+function renderTimer(leftMs){
+  if(leftMs === undefined) leftMs = timer.running ? Math.max(0, timer.endAt - Date.now()) : timer.remain;
+  var sec = Math.ceil(leftMs / 1000);
+  $('#timeText').textContent = pad2(Math.floor(sec / 60)) + ':' + pad2(sec % 60);
+  var p = 1 - leftMs / POMO_MS;
+  $('#ringFg').style.strokeDashoffset = String(552.92 * (1 - Math.max(0, Math.min(1, p))));
+
+  var card = $('#timerCard'), btn = $('#btnStart'), phase = $('#phaseText');
+  var full = countOf(todayKey()) >= MAX_PER_DAY;
+
+  if(timer.running){
+    card.classList.add('running'); phase.textContent = '专注中'; btn.textContent = '暂停';
+  } else {
+    card.classList.remove('running');
+    if(leftMs < POMO_MS){ phase.textContent = '已暂停'; btn.textContent = '继续'; }
+    else { phase.textContent = '准备开始'; btn.textContent = '开始专注'; }
+  }
+  btn.disabled = full && !timer.running;
+  if(full && !timer.running){ phase.textContent = '今日已满'; btn.textContent = '今日已满'; }
+}
+
+/* ==================================================================
+   渲染
+   ================================================================== */
+var view = { y: 0, m: 0 };
+var selectedDate = null;
+var arrivedDay = todayKey();
+
+function $(s){ return document.querySelector(s); }
+
+function renderAll(){
+  renderHeader(); renderToday(); renderCalendar(); renderDay(); renderStats(); renderTimer();
+}
+
+function renderHeader(){
+  $('#hdToday').textContent = String(countOf(todayKey()));
+  $('#hdStreak').textContent = String(computeStreak());
+}
+
+function renderToday(){
+  var key = todayKey(), n = countOf(key), arr = pomsOf(key);
+  $('#todayCount').textContent = String(n);
+  $('#bar').style.width = (n / MAX_PER_DAY * 100) + '%';
+
+  var b = [];
+  if(n >= MIN_PER_DAY)  b.push('<span class="badge">' + flowerSVG() + ' 达标</span>');
+  if(n >= GOLD_FROM)      b.push('<span class="badge gold">红金</span>');
+  else if(n >= RED_FROM)  b.push('<span class="badge">红色</span>');
+  $('#todayBadges').innerHTML = b.join('');
+
+  var html = '';
+  for(var i = 0; i < MAX_PER_DAY; i++){
+    var done = i < n;
+    var cls = 'slot' + (done ? ' done' : '');
+    var st = done ? ' style="' + pomoStyle(i + 1) + '"' : '';
+    html += '<button class="' + cls + '"' + st + ' data-slot="' + i + '" aria-label="第' + (i + 1) + '个">' +
+              (i + 1) + (done && arr[i] && arr[i].n ? '<i class="nd"></i>' : '') +
+            '</button>';
+  }
+  $('#slots').innerHTML = html;
+}
+
+
+/* ---------- 月相 ---------- */
+function moonPhase(d){
+  var p = (d - 1) / 29;
+  return p < 0 ? 0 : (p > 1 ? 1 : p);
+}
+
+function moonPhaseName(d){
+  var p = moonPhase(d);
+  if(p < 0.03 || p > 0.97) return '新月';
+  if(p < 0.22) return '娥眉月';
+  if(p < 0.28) return '上弦月';
+  if(p < 0.47) return '盈凸月';
+  if(p < 0.53) return '满月';
+  if(p < 0.72) return '亏凸月';
+  if(p < 0.78) return '下弦月';
+  return '残月';
+}
+
+function moonSVG(d){
+  var p = moonPhase(d);
+  var r = 5, cx = 10, cy = 10;
+  var k = Math.cos(2 * Math.PI * p);
+  var rx = Math.abs(k) * r;
+  var outer = (p < 0.5) ? 1 : 0;
+  var inner = (k > 0) ? (1 - outer) : outer;
+  var path = 'M ' + cx + ' ' + (cy - r) +
+             ' A ' + r + ' ' + r + ' 0 0 ' + outer + ' ' + cx + ' ' + (cy + r) +
+             ' A ' + rx.toFixed(2) + ' ' + r + ' 0 0 ' + inner + ' ' + cx + ' ' + (cy - r) + ' Z';
+  return '<svg class="moon" viewBox="0 0 20 20" aria-hidden="true">' +
+           '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="#9E9179"/>' +
+           '<path d="' + path + '" fill="#F3D9A0"/>' +
+           '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" ' +
+                   'stroke="#8F8269" stroke-width="0.5" opacity=".5"/>' +
+         '</svg>';
+}
+
+function renderCalendar(){
+  $('#calWeek').innerHTML = WEEK_HD.map(function(w, i){
+    var isWe = (i + WEEK_START) % 7 === 0 || (i + WEEK_START) % 7 === 6;
+    return '<div class="' + (isWe ? 'we' : '') + '">' + w + '</div>';
+  }).join('');
+
+  var y = view.y, m = view.m;
+  $('#calTitle').textContent = y + '年' + m + '月';
+
+  var first = new Date(y, m - 1, 1);
+  var lead = (first.getDay() - WEEK_START + 7) % 7;
+  var total = new Date(y, m, 0).getDate();
+  var tKey = todayKey(), today0 = midnight(new Date());
+
+  var cells = [];
+  for(var i = 0; i < lead; i++) cells.push('<div class="cal-day blank"></div>');
+
+  for(var d = 1; d <= total; d++){
+    var dt = new Date(y, m - 1, d), k = ymd(dt), c = countOf(k);
+    var L = solar2lunar(y, m, d);
+    var evs = eventsOf(y, m, d, L);
+
+    var cls = ['cal-day'];
+    if(k === tKey) cls.push('today');
+    if(k === selectedDate) cls.push('sel');
+    if(dt > today0) cls.push('future');
+    if(c >= RAINBOW_FROM) cls.push('rain');
+    else if(c >= GOLD_FROM) cls.push('gold');
+    else if(c >= RED_FROM) cls.push('red');
+
+    var sub = '';
+    if(evs.length) sub = '<span class="cl ' + evs[0].t + '">' + escHtml(evs[0].s) + '</span>';
+    else sub = '<span class="cl">' + (L ? (L.d === 1 ? L.monthCn : L.dayCn) : '') + '</span>';
+
+    cells.push(
+      '<button class="' + cls.join(' ') + '" data-date="' + k + '">' +
+        (c >= MIN_PER_DAY ? '<span class="cf">' + flowerSVG() + '</span>' : '') +
+        '<span class="cn">' + d + '</span>' + sub +
+        (c > 0 ? '<span class="mini"><i style="width:' + Math.min(100, Math.round(c / MAX_PER_DAY * 100)) + '%"></i></span>' : '') +
+      '</button>'
+    );
+  }
+  while(cells.length % 7 !== 0) cells.push('<div class="cal-day blank"></div>');
+  $('#calGrid').innerHTML = cells.join('');
+}
+
+function renderDay(){
+  if(!selectedDate) selectedDate = todayKey();
+  var dt = parseYmd(selectedDate);
+  var y = dt.getFullYear(), m = dt.getMonth() + 1, d = dt.getDate();
+  var L = solar2lunar(y, m, d);
+  var evs = eventsOf(y, m, d, L);
+  var n = countOf(selectedDate), arr = pomsOf(selectedDate);
+  var isFuture = dt > midnight(new Date());
+
+  $('#dayTitle').innerHTML = m + '月' + d + '日 ' + WEEK_S[dt.getDay()] +
+    (n >= MIN_PER_DAY ? ' ' + flowerSVG() : '');
+
+  var sub = '农历 ' + (L ? L.text : '—') + ' · ' + n + ' 个番茄';
+  if(n >= MIN_PER_DAY) sub += ' · 已达标';
+  else if(n > 0) sub += ' · 差 ' + (MIN_PER_DAY - n) + ' 个';
+  $('#daySub').textContent = sub;
+  if(L){
+    $('#dayMoon').innerHTML = moonSVG(L.d);
+    $('#dayPhase').textContent = moonPhaseName(L.d);
+  } else {
+    $('#dayMoon').innerHTML = '';
+    $('#dayPhase').textContent = '';
+  }
+
+  $('#dayEvents').innerHTML = evs.map(function(e){
+    return '<span class="ev ' + e.t + '">' + escHtml(e.f) + '</span>';
+  }).join('');
+
+  $('#btnAddPom').style.display = (!isFuture && n < MAX_PER_DAY) ? '' : 'none';
+
+  if(!arr.length){
+    $('#pomList').innerHTML = '<div class="empty-tip">这一天还没有记录</div>';
+    return;
+  }
+  var html = '';
+  for(var i = 0; i < arr.length; i++){
+    var p = arr[i], lv = levelOf(i + 1);
+    html += '<div class="pom-row" data-edit="' + i + '">' +
+              '<div class="idx" style="' + pomoStyle(i + 1) + '">' + (i + 1) + '</div>' +
+              '<div class="body"><div class="note' + (p.n ? '' : ' empty') + '">' +
+                (p.n ? escHtml(p.n) : '（点击添加说明）') + '</div>' +
+                '<div class="meta">' + (p.t ? fmtTime(p.t) : '补记') + ' · ' + MINUTES + ' 分钟</div>' +
+              '</div></div>';
+  }
+  $('#pomList').innerHTML = html;
+}
+
+function computeStreak(){
+  var d = midnight(new Date());
+  if(countOf(ymd(d)) < MIN_PER_DAY) d.setDate(d.getDate() - 1);
+  var s = 0, guard = 0;
+  while(guard++ < 4000){
+    if(countOf(ymd(d)) >= MIN_PER_DAY){ s++; d.setDate(d.getDate() - 1); } else break;
+  }
+  return s;
+}
+
+function renderStats(){
+  var keys = Object.keys(db.days).sort();
+  var total = 0, meet = 0, best = 0, run = 0, prev = null;
+  for(var i = 0; i < keys.length; i++){
+    var n = countOf(keys[i]);
+    total += n;
+    if(n >= MIN_PER_DAY){
+      meet++;
+      if(prev && daysBetween(parseYmd(prev), parseYmd(keys[i])) === 1) run++;
+      else run = 1;
+      if(run > best) best = run;
+      prev = keys[i];
+    } else { run = 0; prev = null; }
+  }
+  $('#stTotal').textContent = String(total);
+  $('#stHours').textContent = (total * MINUTES / 60).toFixed(1) + 'h';
+  $('#stDays').textContent = String(meet);
+  $('#stBest').textContent = String(best);
+
+  var ws = startOfWeek(new Date()), wk = 0;
+  for(var j = 0; j < 7; j++) wk += countOf(ymd(new Date(ws.getFullYear(), ws.getMonth(), ws.getDate() + j)));
+  $('#stWeek').textContent = String(wk);
+
+  var now = new Date(), passed = now.getDate(), mm = 0;
+  for(var d = 1; d <= passed; d++) if(countOf(ymd(new Date(now.getFullYear(), now.getMonth(), d))) >= MIN_PER_DAY) mm++;
+  $('#stRate').textContent = Math.round(mm / passed * 100) + '%';
+}
+
+/* ==================================================================
+   弹层
+   ================================================================== */
+var sheetCtx = null;
+
+function openSheet(key, index, isNew){
+  var arr = pomsOf(key), p = arr[index];
+  sheetCtx = { key: key, index: index, isNew: !!isNew };
+
+  var dt = parseYmd(key);
+  var L = solar2lunar(dt.getFullYear(), dt.getMonth() + 1, dt.getDate());
+  $('#mTitle').textContent = isNew ? '补记一个' : '第 ' + (index + 1) + ' 个';
+  $('#mSub').textContent = (dt.getMonth() + 1) + '月' + dt.getDate() + '日 ' + WEEK_S[dt.getDay()] +
+    ' · 农历' + (L ? L.text : '—') + (isNew ? '' : ' · ' + (p.t ? fmtTime(p.t) : '补记'));
+  var input = $('#mInput');
+  input.value = (!isNew && p) ? p.n : '';
+  updateCount();
+  $('#scrim').classList.add('open');
+  $('#sheet').classList.add('open');
+  setTimeout(function(){
+    input.focus();
+    input.setSelectionRange(input.value.length, input.value.length);
+    input.scrollIntoView({ block: 'center' });
+  }, 320);
+}
+function closeSheet(){
+  $('#scrim').classList.remove('open');
+  $('#sheet').classList.remove('open');
+  $('#mInput').blur();
+  sheetCtx = null;
+}
+function updateCount(){ $('#mCount').textContent = $('#mInput').value.length + ' / ' + NOTE_MAX; }
+
+function saveSheet(){
+  if(!sheetCtx) return;
+  var note = $('#mInput').value.slice(0, NOTE_MAX).replace(/\s+$/g, '');
+  var key = sheetCtx.key;
+  if(sheetCtx.isNew){
+    var t = (key === todayKey()) ? Date.now() : 0;
+    var idx = addPom(key, note, t);
+    if(idx < 0){ toast('这一天已满 15 个'); closeSheet(); return; }
+    if(countOf(key) === MIN_PER_DAY){ toast('🌸 达标！日期上长出一朵小红花'); buzz(60); }
+  } else {
+    var arr = pomsOf(key);
+    if(arr[sheetCtx.index]) arr[sheetCtx.index].n = note;
+  }
+  saveDB(); closeSheet(); renderAll();
+}
+
+/* ==================================================================
+   导入导出
+   ================================================================== */
+function download(filename, text, mime){
+  try{
+    var blob = new Blob([text], { type: mime + ';charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename; a.rel = 'noopener';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
+  }catch(e){ toast('导出失败'); }
+}
+
+function exportJSON(){
+  saveDB();
+  download('快乐番茄-' + todayKey() + '.json', JSON.stringify({
+    app: '快乐番茄', schema: 'kuaile.fanqie', version: 1,
+    exportedAt: new Date().toISOString(),
+    rule: { minutes: MINUTES, maxPerDay: MAX_PER_DAY, minPerDay: MIN_PER_DAY,
+            redFrom: RED_FROM, goldFrom: GOLD_FROM, rainbowFrom: RAINBOW_FROM },
+    days: db.days
+  }, null, 2), 'application/json');
+  toast('已导出 JSON');
+}
+
+function csvCell(v){
+  var s = String(v == null ? '' : v);
+  return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
+function exportCSV(){
+  saveDB();
+  var rows = [['日期','星期','农历','节气','纪念','番茄数','分钟','是否达标','说明']];
+  var keys = Object.keys(db.days).sort();
+  for(var i = 0; i < keys.length; i++){
+    var k = keys[i], n = countOf(k), dt = parseYmd(k);
+    var L = solar2lunar(dt.getFullYear(), dt.getMonth() + 1, dt.getDate());
+    var evs = eventsOf(dt.getFullYear(), dt.getMonth() + 1, dt.getDate(), L);
+    var terms = [], fams = [], notes = [], arr = pomsOf(k);
+    for(var e = 0; e < evs.length; e++){ if(evs[e].t === 'term') terms.push(evs[e].f); else fams.push(evs[e].f); }
+    for(var j = 0; j < arr.length; j++) if(arr[j].n) notes.push((j + 1) + '.' + arr[j].n);
+    rows.push([k, WEEK_CN[dt.getDay()], L ? L.text : '', terms.join('/'), fams.join('/'),
+      n, n * MINUTES, n >= MIN_PER_DAY ? '是' : '否', notes.join(' | ')]);
+  }
+  if(rows.length === 1) rows.push(['（暂无数据）','','','','','','','','']);
+  download('快乐番茄-' + todayKey() + '.csv',
+    '﻿' + rows.map(function(r){ return r.map(csvCell).join(','); }).join('\r\n'), 'text/csv');
+  toast('已导出 CSV');
+}
+
+function validateImport(obj){
+  if(!obj || typeof obj !== 'object' || !obj.days || typeof obj.days !== 'object') return null;
+  var src = obj.days, days = {}, keys = Object.keys(src), ok = 0;
+  for(var i = 0; i < keys.length; i++){
+    var k = keys[i];
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(k)) continue;
+    var rec = src[k], arr = (rec && Array.isArray(rec.poms)) ? rec.poms : null;
+    if(!arr) continue;
+    var poms = [];
+    for(var j = 0; j < arr.length && poms.length < MAX_PER_DAY; j++){
+      var p = arr[j];
+      if(!p || typeof p !== 'object') continue;
+      var t = Number(p.t);
+      poms.push({ t: isFinite(t) && t > 0 ? t : 0, n: String(p.n == null ? '' : p.n).slice(0, NOTE_MAX) });
+    }
+    if(poms.length){ days[k] = { poms: poms }; ok++; }
+  }
+  return ok ? days : null;
+}
+
+function handleImport(file){
+  if(!file) return;
+  if(file.size > 5 * 1024 * 1024){ toast('文件过大'); return; }
+  var reader = new FileReader();
+  reader.onload = function(){
+    try{
+      var days = validateImport(JSON.parse(String(reader.result)));
+      if(!days){ toast('格式不对，导入失败'); return; }
+      var n = Object.keys(days).length;
+      if(!confirm('导入 ' + n + ' 天的记录，同日期会覆盖。继续吗？')) return;
+      var ks = Object.keys(days);
+      for(var i = 0; i < ks.length; i++) db.days[ks[i]] = days[ks[i]];
+      saveDB(); renderAll();
+      toast('导入完成 · ' + n + ' 天');
+    }catch(e){ toast('解析失败'); }
+  };
+  reader.onerror = function(){ toast('读取失败'); };
+  reader.readAsText(file, 'utf-8');
+}
+
+/* ==================================================================
+   工具
+   ================================================================== */
+function fmtTime(ts){ var d = new Date(ts); return pad2(d.getHours()) + ':' + pad2(d.getMinutes()); }
+function escHtml(s){
+  return String(s).replace(/[&<>"']/g, function(c){
+    return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+  });
+}
+function escAttr(s){ return escHtml(s); }
+
+var toastId = null;
+function toast(msg){
+  var el = $('#toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  if(toastId) clearTimeout(toastId);
+  toastId = setTimeout(function(){ el.classList.remove('show'); }, 2200);
+}
+
+/* ==================================================================
+   事件绑定
+   ================================================================== */
+function bind(){
+  $('#btnStart').addEventListener('click', function(){ timer.running ? pauseTimer() : startTimer(); });
+  $('#ringWrap').addEventListener('click', function(){
+    buzz(12);
+    timer.running ? pauseTimer() : startTimer();
+  });
+  $('#btnReset').addEventListener('click', function(){
+    if(timer.running || timer.remain < POMO_MS){
+      if(!confirm('重置当前番茄钟？已进行的不会记录。')) return;
+    }
+    resetTimer();
+  });
+
+  $('#slots').addEventListener('click', function(e){
+    var btn = e.target.closest('[data-slot]');
+    if(!btn) return;
+    var i = Number(btn.getAttribute('data-slot'));
+    var key = todayKey(), n = countOf(key);
+    buzz(10);
+    if(i < n) openSheet(key, i, false);
+    else if(n >= MAX_PER_DAY) toast('今天已满 15 个');
+    else openSheet(key, i, true);
+  });
+
+  $('#calPrev').addEventListener('click', function(){
+    view.m--; if(view.m < 1){ view.m = 12; view.y--; } renderCalendar();
+  });
+  $('#calNext').addEventListener('click', function(){
+    view.m++; if(view.m > 12){ view.m = 1; view.y++; } renderCalendar();
+  });
+  $('#calToday').addEventListener('click', function(){
+    var now = new Date();
+    view.y = now.getFullYear(); view.m = now.getMonth() + 1;
+    selectedDate = todayKey();
+    renderCalendar(); renderDay();
+  });
+
+  var grid = $('#calGrid');
+  var sx = 0, sy = 0, moved = false;
+
+  grid.addEventListener('touchstart', function(e){
+    if(e.touches.length !== 1) return;
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY; moved = false;
+  }, { passive: true });
+  grid.addEventListener('touchmove', function(e){
+    if(e.touches.length !== 1) return;
+    if(Math.abs(e.touches[0].clientX - sx) > 12) moved = true;
+  }, { passive: true });
+  grid.addEventListener('touchend', function(e){
+    var dx = e.changedTouches[0].clientX - sx;
+    var dy = e.changedTouches[0].clientY - sy;
+    if(Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.6){
+      moved = true;
+      if(dx < 0){ view.m++; if(view.m > 12){ view.m = 1; view.y++; } }
+      else { view.m--; if(view.m < 1){ view.m = 12; view.y--; } }
+      renderCalendar(); buzz(10);
+    }
+  }, { passive: true });
+
+  grid.addEventListener('click', function(e){
+    if(moved){ moved = false; return; }
+    var btn = e.target.closest('[data-date]');
+    if(!btn) return;
+    selectedDate = btn.getAttribute('data-date');
+    renderCalendar(); renderDay(); buzz(8);
+  });
+
+  $('#btnAddPom').addEventListener('click', function(){
+    if(!selectedDate) return;
+    var n = countOf(selectedDate);
+    if(n >= MAX_PER_DAY){ toast('这一天已满 15 个'); return; }
+    openSheet(selectedDate, n, true);
+  });
+
+  $('#pomList').addEventListener('click', function(e){
+    var row = e.target.closest('[data-edit]');
+    if(!row || !selectedDate) return;
+    openSheet(selectedDate, Number(row.getAttribute('data-edit')), false);
+  });
+
+  $('#mCancel').addEventListener('click', closeSheet);
+  $('#mSave').addEventListener('click', saveSheet);
+  $('#mInput').addEventListener('input', updateCount);
+  $('#scrim').addEventListener('click', closeSheet);
+
+  $('#btnExportJson').addEventListener('click', exportJSON);
+  $('#btnExportCsv').addEventListener('click', exportCSV);
+  $('#btnImport').addEventListener('click', function(){ $('#fileInput').click(); });
+  $('#fileInput').addEventListener('change', function(e){
+    handleImport(e.target.files && e.target.files[0]);
+    e.target.value = '';
+  });
+  $('#btnClear').addEventListener('click', function(){
+    if(!confirm('确定清空全部记录？不可撤销。')) return;
+    if(!confirm('再确认一次。')) return;
+    db = { v: 1, days: {} };
+    try{ localStorage.removeItem(KEY); }catch(e){}
+    clearTimerStore();
+    selectedDate = todayKey();
+    resetTimer(); renderAll();
+    toast('已清空');
+  });
+
+  setInterval(function(){
+    var k = todayKey();
+    if(k !== arrivedDay){
+      arrivedDay = k;
+      var now = new Date();
+      view.y = now.getFullYear(); view.m = now.getMonth() + 1;
+      renderAll();
+    }
+  }, 30000);
+
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden){ releaseWakeLock(); return; }
+    if(timer.running){ tickTimer(); requestWakeLock(); } else { renderTimer(); }
+  });
+
+  window.addEventListener('beforeunload', function(){ saveDB(); });
+
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && $('#sheet').classList.contains('open')) closeSheet();
+  });
+}
+
+/* ==================================================================
+   启动
+   ================================================================== */
+function init(){
+  db = loadDB();
+  var now = new Date();
+  view.y = now.getFullYear();
+  view.m = now.getMonth() + 1;
+  selectedDate = todayKey();
+  arrivedDay = todayKey();
+
+  var saved = loadTimer();
+  if(saved && saved.running && saved.endAt > 0){
+    if(Date.now() - saved.endAt < 6 * 3600 * 1000 && saved.endAt - Date.now() <= POMO_MS){
+      timer = saved;
+      if(timer.endAt > Date.now()) loop(); else completeTimer();
+    } else { clearTimerStore(); }
+  } else if(saved && !saved.running && saved.remain < POMO_MS){
+    timer = saved;
+  }
+
+  bind(); renderAll();
+}
+
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+else init();
+
+})();
+</script>
+
+<script>
+/* PWA：装到桌面后离线可用。本地双击打开时不会注册 */
+(function(){
+  var ok = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  if(!ok || !('serviceWorker' in navigator)) return;
+  addEventListener('load', function(){
+    navigator.serviceWorker.register('./sw.js').catch(function(){});
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#F4F7F4">
+<meta name="format-detection" content="telephone=no">
+<title>专注花园</title>
+<style>
+  :root{
+    --bg:#F4F7F4; --card:#FFFFFF;
+    --ink:#1F2521; --ink-2:#5E6A61; --ink-3:#9AA69C;
+    --line:#E4EAE5; --red:#D64541;
+    --shadow:0 1px 2px rgba(28,43,34,.05), 0 8px 24px rgba(28,43,34,.06);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    padding:calc(28px + env(safe-area-inset-top)) 16px calc(32px + env(safe-area-inset-bottom));
+    display:flex; justify-content:center;
+  }
+  .wrap{width:100%;max-width:430px}
+
+  header{margin:0 4px 22px}
+  h1{
+    margin:0; font-size:30px; font-weight:600; letter-spacing:.06em;
+    font-family:"Songti SC","STSong","SimSun",serif;
+  }
+  h1 .hl{color:var(--red)}
+  .tagline{margin:8px 0 0; font-size:12.5px; color:var(--ink-3); letter-spacing:.08em}
+
+  a.card{
+    display:flex; align-items:center; gap:14px;
+    background:var(--card); border-radius:16px; padding:16px;
+    box-shadow:var(--shadow); text-decoration:none; color:inherit;
+    margin-bottom:12px; transition:transform .12s ease, box-shadow .16s ease;
+  }
+  a.card:active{transform:scale(.985)}
+  .icon{
+    width:58px; height:58px; border-radius:14px; flex:0 0 auto;
+    background:#FBF3F0; overflow:hidden;
+  }
+  .icon img{width:100%;height:100%;display:block}
+  .meta{flex:1; min-width:0}
+  .name{font-size:17px; font-weight:650; letter-spacing:.02em; margin-bottom:3px}
+  .name em{font-style:normal;color:var(--red)}
+  .desc{font-size:12.5px; color:var(--ink-2); line-height:1.45}
+  .duration{
+    flex:0 0 auto; font-size:12px; color:var(--red);
+    background:#FBE9E8; border-radius:999px; padding:5px 11px;
+    font-variant-numeric:tabular-nums; letter-spacing:.02em;
+  }
+
+  footer{margin:22px 4px 0; font-size:11.5px; color:var(--ink-3); line-height:1.8}
+  footer b{color:var(--ink-2); font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>专注<span class="hl">花园</span></h1>
+    <p class="tagline">记下每天专注的时辰</p>
+  </header>
+
+  <a class="card" href="happy-tomato.html">
+    <div class="icon"><img src="icons/tomato-192.png" alt=""></div>
+    <div class="meta">
+      <div class="name"><em>快乐</em>番茄</div>
+      <div class="desc">一颗番茄钟换一格</div>
+    </div>
+    <div class="duration">25 分</div>
+  </a>
+
+  <a class="card" href="quarterbloom.html">
+    <div class="icon"><img src="icons/bloom-192.png" alt=""></div>
+    <div class="meta">
+      <div class="name"><em>一刻</em>花开</div>
+      <div class="desc">一刻钟绽一朵玫瑰</div>
+    </div>
+    <div class="duration">15 分</div>
+  </a>
+
+  <footer>
+    数据存在本机浏览器，<b>两个应用各记各的</b>。<br>
+    清理浏览器数据会丢失记录，建议定期用「导出 JSON」备份。<br>
+    在浏览器菜单里选「安装应用」或「添加到主屏幕」，可以像普通应用一样打开，断网也能用。
+  </footer>
+
+</div>
+</body>
+</html>
